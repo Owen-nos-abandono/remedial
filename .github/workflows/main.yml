@@ -5,7 +5,8 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build-and-push:
+  # ETAPA 1: Construcción y Pruebas Unitarias
+  build-and-test:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -13,6 +14,19 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+
+      # --- INICIO PRUEBAS JEST ---
+      - name: Setup Node.js (para Jest)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Dependencies
+        run: npm install  # O usa 'cd frontend && npm install' si está en carpeta
+
+      - name: Run Jest Tests
+        run: npm test -- --watchAll=false
+      # --- FIN PRUEBAS JEST ---
 
       - name: Login to GHCR
         uses: docker/login-action@v3
@@ -26,22 +40,20 @@ jobs:
         with:
           context: .
           push: true
-          # Usamos el nombre del paquete que ya tienes en GitHub
           tags: ghcr.io/owen-nos-abandono/remedial:latest
 
+  # ETAPA 2: Despliegue Blue-Green
   deploy:
-    needs: build-and-push
+    needs: build-and-test
     runs-on: ubuntu-latest
     steps:
       - name: Execute Blue-Green Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
-          # Verifica que estos nombres coincidan con tus Secrets en GitHub
           host: ${{ secrets.GCP_DOCKER_SERVER_IP }}
           username: riveradiazjanine
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            # 1. Detectar cuál contenedor está activo para decidir el nuevo color
             if [ "$(docker ps -q -f name=app-blue)" ]; then
               NEW_COLOR="green"
               NEW_PORT="8081"
@@ -52,29 +64,37 @@ jobs:
               OLD_COLOR="green"
             fi
 
-            echo "Desplegando versión $NEW_COLOR en el puerto $NEW_PORT..."
+            echo "Desplegando versión $NEW_COLOR..."
 
-            # 2. Descargar la imagen más reciente
             docker pull ghcr.io/owen-nos-abandono/remedial:latest
-
-            # 3. Limpiar si existe un contenedor previo del mismo color
             docker stop app-$NEW_COLOR || true
             docker rm app-$NEW_COLOR || true
 
-            # 4. Levantar el nuevo contenedor
             docker run -d --name app-$NEW_COLOR -p $NEW_PORT:8080 \
               --restart always \
               ghcr.io/owen-nos-abandono/remedial:latest
 
-            # 5. Esperar a que la app arranque
             sleep 15
 
-            # 6. CAMBIO DE TRÁFICO: Actualizar Nginx en la VM 10.0.2.3
+            # Cambio de tráfico en Nginx
             ssh -o StrictHostKeyChecking=no riveradiazjanine@10.0.2.3 \
             "sudo sed -i 's/server 10.0.1.2:.*/server 10.0.1.2:$NEW_PORT;/' /etc/nginx/sites-available/default && sudo systemctl reload nginx"
 
-            # 7. Limpiar la versión antigua
+            # Limpieza automática del contenedor viejo
             docker stop app-$OLD_COLOR || true
             docker rm app-$OLD_COLOR || true
-            
-            echo "Despliegue Blue-Green completado con éxito."
+            docker image prune -af
+
+  # ETAPA 3: Pruebas de Carga (K6)
+  performance-test:
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Run K6 Load Test
+        uses: grafana/k6-action@v0.3.1
+        with:
+          filename: k6-script.js  # Asegúrate de tener este archivo en tu repo
+          flags: --vus 10 --duration 30s
