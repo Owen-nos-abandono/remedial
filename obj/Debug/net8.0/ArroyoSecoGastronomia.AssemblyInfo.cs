@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ArroyoSecoGastronomia")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+513610c4b6faf9ba370c6f149d55bf8df006cd27")]
 [assembly: System.Reflection.AssemblyProductAttribute("ArroyoSecoGastronomia")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ArroyoSecoGastronomia")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
