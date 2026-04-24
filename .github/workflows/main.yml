@@ -1,0 +1,63 @@
+name: Despliegue Zero-To-Hero
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ghcr.io/${{ github.repository }}:latest
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH Deploy
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.GCP_DOCKER_SERVER_IP }}
+          username: riveradiazjanine
+          key: ${{ secrets.GCP_SSH_PRIVATE_KEY }}
+          script: |
+            # 1. Determinar color
+            if [ "$(docker ps -q -f name=app-blue)" ]; then
+              NEW_COLOR="green"
+              NEW_PORT="8081"
+              OLD_COLOR="blue"
+            else
+              NEW_COLOR="blue"
+              NEW_PORT="8080"
+              OLD_COLOR="green"
+            fi
+
+            # 2. Desplegar
+            docker pull ghcr.io/${{ github.repository }}:latest
+            docker stop app-$NEW_COLOR || true
+            docker rm app-$NEW_COLOR || true
+            
+            docker run -d --name app-$NEW_COLOR -p $NEW_PORT:8080 ghcr.io/${{ github.repository }}:latest
+
+            sleep 10
+
+            # 3. Avisar a Nginx (Cambio de puerto)
+            ssh -o StrictHostKeyChecking=no riveradiazjanine@10.0.2.3 "sudo sed -i 's/server 10.0.1.2:.*/server 10.0.1.2:$NEW_PORT;/' /etc/nginx/sites-available/default && sudo systemctl reload nginx"
+            
+            # 4. Limpiar viejo
+            docker stop app-$OLD_COLOR || true
+            docker rm app-$OLD_COLOR || true

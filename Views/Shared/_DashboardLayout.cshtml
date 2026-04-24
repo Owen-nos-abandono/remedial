@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Gastronomía – Arroyo Seco</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:#f5f5f5;color:#1a1a1a;min-height:100vh}
+
+/* ── NAVBAR ─────────────────────────────────────────────────────────────── */
+.navbar{
+  display:flex;align-items:center;background:#fff;
+  border-bottom:3px solid #1a7a3c;
+  padding:0 2rem;height:60px;
+  position:sticky;top:0;z-index:100;
+  box-shadow:0 1px 4px rgba(0,0,0,.08);
+}
+.navbar-brand{display:flex;align-items:center;gap:.6rem;margin-right:2rem;text-decoration:none}
+.navbar-brand img{height:36px}
+.navbar-brand .brand-text{color:#1a7a3c;font-weight:700;font-size:1.1rem}
+.navbar-nav{display:flex;align-items:center;gap:.25rem;flex:1}
+.nav-link{
+  color:#333;text-decoration:none;font-size:.875rem;font-weight:500;
+  padding:.45rem .85rem;border-radius:6px;transition:background .15s,color .15s;
+  white-space:nowrap;
+}
+.nav-link:hover{background:#f0f9f3;color:#1a7a3c}
+.nav-link.active{background:#e8f5ee;color:#1a7a3c}
+.navbar-right{display:flex;align-items:center;gap:.75rem;margin-left:auto}
+.btn-cambiar{
+  display:flex;align-items:center;gap:.5rem;
+  border:1.5px solid #1a7a3c;color:#1a7a3c;background:#fff;
+  border-radius:8px;padding:.42rem 1rem;font-size:.82rem;font-weight:500;
+  cursor:pointer;text-decoration:none;transition:background .15s;
+}
+.btn-cambiar:hover{background:#f0f9f3}
+.btn-cerrar{color:#c0392b;font-size:.875rem;font-weight:500;text-decoration:none;transition:color .15s}
+.btn-cerrar:hover{color:#a93226}
+
+/* ── HERO BANNER ─────────────────────────────────────────────────────────── */
+.hero-banner{
+  background:linear-gradient(135deg,#fffde7 0%,#f9f3e0 60%,#fef9e7 100%);
+  padding:2.5rem 3rem;
+  display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid #e8e0cc;
+  min-height:160px;
+}
+.hero-banner h1{font-size:1.9rem;font-weight:700;color:#1a1a1a;margin-bottom:.35rem}
+.hero-banner p{color:#666;font-size:.95rem}
+.hero-banner img{height:120px;border-radius:8px;object-fit:cover;box-shadow:0 2px 12px rgba(0,0,0,.12)}
+
+/* ── MAIN CONTENT ───────────────────────────────────────────────────────── */
+.main{padding:2rem 3rem}
+
+/* ── STAT CARDS ─────────────────────────────────────────────────────────── */
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.25rem;margin-bottom:2rem}
+.stat-card{
+  background:#fff;border:1.5px solid #e0e0e0;border-radius:14px;
+  padding:1.4rem 1.6rem;display:flex;align-items:center;gap:1.1rem;
+  transition:box-shadow .2s;
+}
+.stat-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.08)}
+.stat-card.active{background:#f0fff4;border-color:#1a7a3c}
+.stat-icon{font-size:2.2rem}
+.stat-info .stat-number{font-size:1.8rem;font-weight:700;color:#1a1a1a;line-height:1}
+.stat-info .stat-label{font-size:.8rem;color:#888;margin-top:.2rem}
+
+/* ── QUICK ACTIONS ──────────────────────────────────────────────────────── */
+.section-title{font-size:1.1rem;font-weight:700;color:#1a1a1a;margin-bottom:1rem}
+.actions-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem}
+.action-card{
+  background:#fff;border:1.5px solid #e8e8e8;border-radius:14px;
+  padding:1.4rem 1rem;text-align:center;cursor:pointer;
+  transition:border-color .2s,box-shadow .2s,transform .15s;
+  text-decoration:none;color:inherit;display:block;
+}
+.action-card:hover{border-color:#1a7a3c;box-shadow:0 4px 16px rgba(26,122,60,.1);transform:translateY(-2px)}
+.action-card .action-icon{font-size:2rem;margin-bottom:.6rem;display:block}
+.action-card .action-title{font-weight:700;font-size:.9rem;color:#1a1a1a;margin-bottom:.25rem}
+.action-card .action-desc{font-size:.78rem;color:#888;line-height:1.35}
+
+/* ── RESTAURANT CARDS ───────────────────────────────────────────────────── */
+.restaurants-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.25rem}
+.rest-card{background:#fff;border:1px solid #e8e8e8;border-radius:14px;overflow:hidden;transition:box-shadow .2s}
+.rest-card:hover{box-shadow:0 6px 24px rgba(0,0,0,.1)}
+.rest-card img{width:100%;height:180px;object-fit:cover;display:block}
+.rest-body{padding:1rem 1.1rem 1.2rem}
+.rest-name{font-weight:700;font-size:.95rem;color:#1a1a1a;margin-bottom:.4rem}
+.rest-addr{font-size:.8rem;color:#666;display:flex;align-items:flex-start;gap:.3rem;margin-bottom:.9rem;line-height:1.4}
+.rest-addr span{color:#e74c3c;font-size:.9rem;flex-shrink:0;margin-top:.05rem}
+.btn-detalles{
+  background:#1a7a3c;color:#fff;border:none;border-radius:8px;
+  padding:.5rem 1.1rem;font-size:.82rem;font-weight:600;cursor:pointer;
+  font-family:'Inter',sans-serif;transition:background .15s;text-decoration:none;display:inline-block;
+}
+.btn-detalles:hover{background:#15622f}
+
+/* ── PLACEHOLDER PAGE ───────────────────────────────────────────────────── */
+.placeholder-page{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:60vh;color:#aaa;
+}
+.placeholder-page h2{font-size:1.5rem;color:#555;margin-bottom:.5rem}
+.placeholder-page p{font-size:.95rem}
+</style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <a class="navbar-brand" href="/Dashboard">
+    <!-- Logo triángulo AS -->
+    <svg width="36" height="36" viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="lg2" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#ff6b35"/>
+          <stop offset="40%" stop-color="#ffd700"/>
+          <stop offset="100%" stop-color="#1a7a3c"/>
+        </linearGradient>
+      </defs>
+      <polygon points="36,4 68,64 4,64" fill="url(#lg2)"/>
+      <text x="36" y="52" text-anchor="middle" font-size="14" fill="#fff" font-weight="bold" font-family="sans-serif">AS</text>
+    </svg>
+    <span class="brand-text">Gastronomía</span>
+  </a>
+
+  <div class="navbar-nav">
+    <a href="/Dashboard" class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString()=="Index"?"active":"")">Dashboard</a>
+    <a href="/Dashboard/MisRestaurantes" class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString()=="MisRestaurantes"?"active":"")">Mis Restaurantes</a>
+    <a href="/Dashboard/Reservas" class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString()=="Reservas"?"active":"")">Reservas</a>
+    <a href="/Dashboard/Reseñas" class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString()=="Reseñas"?"active":"")">Reseñas</a>
+    <a href="/Dashboard/Notificaciones" class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString()=="Notificaciones"?"active":"")">Notificaciones</a>
+    <a href="/Dashboard/Configuracion" class="nav-link @(ViewContext.RouteData.Values["action"]?.ToString()=="Configuracion"?"active":"")">Configuración</a>
+  </div>
+
+  <div class="navbar-right">
+    <a href="#" class="btn-cambiar">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Cambiar Experiencia
+    </a>
+    <a href="/Account/Logout" class="btn-cerrar">Cerrar sesión</a>
+  </div>
+</nav>
+
+@RenderBody()
+
+</body>
+</html>

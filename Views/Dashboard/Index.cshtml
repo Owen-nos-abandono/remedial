@@ -1,0 +1,95 @@
+@model ArroyoSecoGastronomia.Models.DashboardViewModel
+@{
+    Layout = "_DashboardLayout";
+}
+
+<!-- HERO BANNER -->
+<div class="hero-banner">
+  <div>
+    <h1>¡Bienvenido Oferente de Gastronomía!</h1>
+    <p>Gestiona tus restaurantes y reservas.</p>
+  </div>
+  <img src="https://images.unsplash.com/photo-1501854140801-50d01698950b?w=300&q=80" alt="Arroyo Seco"/>
+</div>
+
+<div class="main">
+
+  <!-- STAT CARDS -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <span class="stat-icon">🍽️</span>
+      <div class="stat-info">
+        <div class="stat-number">@Model.RestaurantCount</div>
+        <div class="stat-label">Restaurantes</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <span class="stat-icon">📅</span>
+      <div class="stat-info">
+        <div class="stat-number">@Model.ActiveReservations</div>
+        <div class="stat-label">Reservas Activas</div>
+      </div>
+    </div>
+    <div class="stat-card active">
+      <span class="stat-icon">⏳</span>
+      <div class="stat-info">
+        <div class="stat-number">@Model.PendingCount</div>
+        <div class="stat-label">Pendientes</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ACCIONES RÁPIDAS -->
+  <h2 class="section-title">Acciones Rápidas</h2>
+  <div class="actions-grid">
+    <a href="/Dashboard/MisRestaurantes" class="action-card">
+      <span class="action-icon">🏪</span>
+      <div class="action-title">Mis Restaurantes</div>
+      <div class="action-desc">Gestiona tus establecimientos</div>
+    </a>
+    <a href="#" class="action-card">
+      <span class="action-icon">➕</span>
+      <div class="action-title">Nuevo Restaurante</div>
+      <div class="action-desc">Registra un nuevo establecimiento</div>
+    </a>
+    <a href="/Dashboard/Reservas" class="action-card">
+      <span class="action-icon">📋</span>
+      <div class="action-title">Ver Reservas</div>
+      <div class="action-desc">Administra las reservas</div>
+    </a>
+    <a href="/Dashboard/Reseñas" class="action-card">
+      <span class="action-icon">⭐</span>
+      <div class="action-title">Reseñas</div>
+      <div class="action-desc">Gestiona las reseñas de tus restaurantes</div>
+    </a>
+    <a href="/Dashboard/Notificaciones" class="action-card">
+      <span class="action-icon">🔔</span>
+      <div class="action-title">Notificaciones</div>
+      <div class="action-desc">Revisa tus notificaciones</div>
+    </a>
+    <a href="/Dashboard/Configuracion" class="action-card">
+      <span class="action-icon">⚙️</span>
+      <div class="action-title">Configuración</div>
+      <div class="action-desc">Ajusta tu perfil</div>
+    </a>
+  </div>
+
+  <!-- TUS RESTAURANTES -->
+  <h2 class="section-title">Tus Restaurantes</h2>
+  <div class="restaurants-grid">
+    @foreach (var r in Model.Restaurants.Take(3))
+    {
+      <div class="rest-card">
+        <img src="@r.ImageUrl" alt="@r.Name"/>
+        <div class="rest-body">
+          <div class="rest-name">@r.Name</div>
+          <div class="rest-addr">
+            <span>📍</span> @r.Address
+          </div>
+          <a href="#" class="btn-detalles">Ver Detalles</a>
+        </div>
+      </div>
+    }
+  </div>
+
+</div>
