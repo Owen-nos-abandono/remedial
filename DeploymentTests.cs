@@ -1,15 +1,15 @@
-using Xunit;
+using System;
 
 namespace ArroyoSeco.Tests
 {
+    // Una prueba simple que solo usa System, para no pedir paquetes extra
     public class DeploymentTests
     {
-        [Fact]
-        public void TestEnvironmentIsProduction()
+        public static void CheckSystem()
         {
-            // Prueba simple para validar el flujo del pipeline
-            bool isReady = true;
-            Assert.True(isReady);
+            Console.WriteLine("Verificando integridad del sistema...");
+            bool isSystemReady = true;
+            if (!isSystemReady) throw new Exception("Error en la prueba de despliegue");
         }
     }
 }

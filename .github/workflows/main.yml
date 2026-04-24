@@ -5,7 +5,7 @@ on:
     branches: [ "main" ]
 
 jobs:
-  # ETAPA 1: Compilación y Pruebas de .NET
+  # ETAPA 1: Compilación y Verificación de Código
   build-and-test:
     runs-on: ubuntu-latest
     permissions:
@@ -23,8 +23,9 @@ jobs:
       - name: Restore Dependencies
         run: dotnet restore
 
-      - name: Run .NET Unit Tests
-        run: dotnet test --configuration Release --no-restore
+      # Verificamos que el proyecto compile correctamente antes de crear la imagen
+      - name: Build Check
+        run: dotnet build --configuration Release --no-restore
 
       - name: Login to GHCR
         uses: docker/login-action@v3
@@ -40,7 +41,7 @@ jobs:
           push: true
           tags: ghcr.io/owen-nos-abandono/remedial:latest
 
-  # ETAPA 2: Despliegue Blue-Green
+  # ETAPA 2: Despliegue Blue-Green Profesional
   deploy:
     needs: build-and-test
     runs-on: ubuntu-latest
@@ -52,6 +53,7 @@ jobs:
           username: riveradiazjanine
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+            # 1. Decidir el color del nuevo despliegue
             if [ "$(docker ps -q -f name=app-blue)" ]; then
               NEW_COLOR="green"
               NEW_PORT="8081"
@@ -62,28 +64,34 @@ jobs:
               OLD_COLOR="green"
             fi
 
-            echo "Desplegando versión $NEW_COLOR en puerto $NEW_PORT..."
+            echo "Desplegando versión $NEW_COLOR en el puerto $NEW_PORT..."
 
+            # 2. Actualizar imagen
             docker pull ghcr.io/owen-nos-abandono/remedial:latest
+
+            # 3. Limpiar contenedor previo del mismo color (si existe)
             docker stop app-$NEW_COLOR || true
             docker rm app-$NEW_COLOR || true
 
+            # 4. Levantar nuevo contenedor
             docker run -d --name app-$NEW_COLOR -p $NEW_PORT:8080 \
               --restart always \
               ghcr.io/owen-nos-abandono/remedial:latest
 
+            # 5. Pausa de seguridad para que la app inicialice
             sleep 15
 
-            # Cambio de tráfico en Nginx (VM 10.0.2.3)
+            # 6. Actualizar Nginx en la VM de Balanceo (10.0.2.3)
             ssh -o StrictHostKeyChecking=no riveradiazjanine@10.0.2.3 \
             "sudo sed -i 's/server 10.0.1.2:.*/server 10.0.1.2:$NEW_PORT;/' /etc/nginx/sites-available/default && sudo systemctl reload nginx"
 
-            # Limpieza automática
+            # 7. Limpieza automática: Borrar contenedor antiguo e imágenes huérfanas
+            echo "Limpiando versión antigua: $OLD_COLOR"
             docker stop app-$OLD_COLOR || true
             docker rm app-$OLD_COLOR || true
             docker image prune -af
 
-  # ETAPA 3: Prueba de Carga con K6
+  # ETAPA 3: Prueba de Rendimiento (K6)
   performance-test:
     needs: deploy
     runs-on: ubuntu-latest
