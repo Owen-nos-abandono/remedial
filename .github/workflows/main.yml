@@ -1,4 +1,4 @@
-name: Despliegue Zero-To-Hero Blue-Green
+name: Deploy Blue-Green Remedial
 
 on:
   push:
@@ -7,9 +7,11 @@ on:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write # Esto soluciona el error de permisos que tenías
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Login to GHCR
         uses: docker/login-action@v3
@@ -18,33 +20,26 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # CORRECCIÓN: Convertimos el nombre del repositorio a minúsculas para Docker
-      - name: Downcase Repo Name
-        run: |
-          echo "REPO_LC=${GITHUB_REPOSITORY,,}" >> ${GITHUB_ENV}
-
-      - name: Build and Push Docker Image
+      - name: Build and Push
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          tags: ghcr.io/${{ env.REPO_LC }}:latest
+          # Usamos el nombre de tu paquete actual
+          tags: ghcr.io/owen-nos-abandono/remedial:latest
 
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
     steps:
-      - name: Execute Blue-Green Deploy via SSH
+      - name: SSH Deploy
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.GCP_DOCKER_SERVER_IP }}
           username: riveradiazjanine
           key: ${{ secrets.GCP_SSH_PRIVATE_KEY }}
           script: |
-            # 1. Convertir nombre del repo a minúsculas también en el script de bash
-            REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
-            
-            # 2. Detectar cuál contenedor está activo para decidir el nuevo color
+            # Detectar color
             if [ "$(docker ps -q -f name=app-blue)" ]; then
               NEW_COLOR="green"
               NEW_PORT="8081"
@@ -55,30 +50,26 @@ jobs:
               OLD_COLOR="green"
             fi
 
-            echo "Desplegando versión $NEW_COLOR en el puerto $NEW_PORT..."
+            # Bajar imagen nueva
+            docker pull ghcr.io/owen-nos-abandono/remedial:latest
 
-            # 3. Descargar la imagen más reciente
-            docker pull ghcr.io/$REPO_LOWER:latest
-
-            # 4. Limpiar si existe un contenedor viejo del mismo color
+            # Limpiar el que está en bucle o fallando
             docker stop app-$NEW_COLOR || true
             docker rm app-$NEW_COLOR || true
 
-            # 5. Levantar el nuevo contenedor
-            docker run -d --name app-$NEW_COLOR -p $NEW_PORT:8080 \
+            # Correr nuevo contenedor con la conexión a la base de datos
+            docker run -d --name app-$NEW_COLOR \
+              -p $NEW_PORT:8080 \
+              -e CONNECTION_STRING="${{ secrets.DB_CONNECTION }}" \
               --restart always \
-              ghcr.io/$REPO_LOWER:latest
+              ghcr.io/owen-nos-abandono/remedial:latest
 
-            # 6. Esperar a que la app arranque (Grace period)
             sleep 15
-
-            # 7. CAMBIO DE TRÁFICO: Actualizar Nginx en la otra VM
-            # Usamos la IP interna 10.0.2.3 para saltar al servidor Nginx
+            
+            # Cambiar tráfico en Nginx (VM 10.0.2.3)
             ssh -o StrictHostKeyChecking=no riveradiazjanine@10.0.2.3 \
             "sudo sed -i 's/server 10.0.1.2:.*/server 10.0.1.2:$NEW_PORT;/' /etc/nginx/sites-available/default && sudo systemctl reload nginx"
 
-            # 8. Limpiar la versión antigua
+            # Borrar el viejo
             docker stop app-$OLD_COLOR || true
             docker rm app-$OLD_COLOR || true
-            
-            echo "Despliegue Blue-Green completado con éxito."
